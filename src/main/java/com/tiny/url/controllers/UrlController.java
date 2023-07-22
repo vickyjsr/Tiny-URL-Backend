@@ -17,12 +17,12 @@ public class UrlController {
     UrlRepository urlRepository;
 
     @PostMapping("/newTinyUrl")
-    public String saveUrl(@RequestParam(value = "originalUrl") String originalUrl) throws NoSuchAlgorithmException {
+    public Url saveUrl(@RequestParam(value = "originalUrl") String originalUrl) throws NoSuchAlgorithmException {
         System.out.println(originalUrl);
         TinyUrl tinyUrl = new TinyUrl(urlRepository);
         Url newUrl = tinyUrl.shortenUrl(originalUrl);
         System.out.println(newUrl.getTinyUrl());
         urlRepository.save(newUrl);
-        return newUrl.getTinyUrl();
+        return newUrl;
     }
 }
