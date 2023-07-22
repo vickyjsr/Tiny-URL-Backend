@@ -25,4 +25,11 @@ public class UrlController {
         urlRepository.save(newUrl);
         return newUrl;
     }
+
+    @GetMapping("/getUrl")
+    public Url getOriginalUrl(@RequestParam(value = "tinyUrl") String tinyUrl) {
+        Url url = urlRepository.findByTinyUrl(tinyUrl);
+        System.out.println(url.toString());
+        return url;
+    }
 }
