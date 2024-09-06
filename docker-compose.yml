@@ -1,0 +1,28 @@
+version: '3.1'
+
+services:
+  # MySQL database service
+  db:
+    image: mysql:8.2.0
+    container_name: tiny-database
+    environment:
+      MYSQL_ROOT_PASSWORD: MYSQL_ALLOW_EMPTY_PASSWORD=1
+      MYSQL_DATABASE: tiny_url
+      MYSQL_ROOT_USER: root
+      MYSQL_PASSWORD: MYSQL_ALLOW_EMPTY_PASSWORD=1
+    ports:
+      - "3306:3306"
+
+  # Spring Boot application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tiny_url_app
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/tiny_url
+      SPRING_DATASOURCE_USERNAME: root
+    ports:
+      - "8000:8080"

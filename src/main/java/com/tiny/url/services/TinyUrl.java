@@ -1,25 +1,24 @@
 package com.tiny.url.services;
 
+import com.tiny.url.helpers.CodeGenerator;
 import com.tiny.url.models.Url;
 import com.tiny.url.repository.UrlRepository;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-@RestController
+@Service
 public class TinyUrl {
 
-    UrlRepository urlRepository;
+    @Autowired
+    private final UrlRepository urlRepository;
 
-    private static final int CODE_LENGTH = 8; // Length of the shortened code
-    private static final String BASE62_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private final MessageDigest md;
+    @Autowired
+    private final CodeGenerator codeGenerator;
 
-    public TinyUrl(UrlRepository urlRepository) throws NoSuchAlgorithmException {
-        this.md = MessageDigest.getInstance("SHA-256");
+    @Autowired
+    public TinyUrl(UrlRepository urlRepository, CodeGenerator codeGenerator) {
         this.urlRepository = urlRepository;
+        this.codeGenerator = codeGenerator;
     }
 
     public Url shortenUrl(String originalUrl) {
@@ -30,25 +29,11 @@ public class TinyUrl {
         String code;
         Url findPart2;
         do {
-            code = generateUniqueCode(originalUrl);
+            code = codeGenerator.generateUniqueCode(originalUrl);
             findPart2 = urlRepository.findByTinyUrl(code);
         } while (findPart2 != null);
-        Url newEntry = new Url(code, originalUrl);
+        Url newEntry = Url.builder().tinyUrl(code).originalUrl(originalUrl).build();
         urlRepository.save(newEntry);
         return newEntry;
-    }
-
-    private String generateUniqueCode(String originalUrl) {
-        byte[] messageDigest = md.digest(originalUrl.getBytes());
-        BigInteger no = new BigInteger(1, messageDigest);
-        String hexHash = no.toString(16);
-
-        StringBuilder codeBuilder = new StringBuilder();
-        for (int i = 0; i < CODE_LENGTH; i++) {
-            int index = Integer.parseInt(hexHash.substring(i * 4, (i + 1) * 4), 16) % BASE62_CHARACTERS.length();
-            codeBuilder.append(BASE62_CHARACTERS.charAt(index));
-        }
-
-        return codeBuilder.toString();
     }
 }
