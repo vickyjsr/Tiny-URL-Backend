@@ -11,20 +11,35 @@ import java.security.NoSuchAlgorithmException;
 @Component
 public class CodeGenerator {
 
-    private final MessageDigest md;
+    private final MessageDigest messageDigest;
 
+    @Autowired
     public CodeGenerator() throws NoSuchAlgorithmException {
-        this.md = MessageDigest.getInstance("SHA-256");
+        this.messageDigest = MessageDigest.getInstance("SHA-256");
     }
 
     public String generateUniqueCode(String originalUrl) {
-        byte[] messageDigest = md.digest(originalUrl.getBytes());
-        BigInteger no = new BigInteger(1, messageDigest);
-        String hexHash = no.toString(16);
+        // Reset the digest to avoid carry-over from previous digests
+        messageDigest.reset();
 
-        StringBuilder codeBuilder = new StringBuilder();
+        // Generate the SHA-256 hash of the original URL
+        byte[] digestBytes = messageDigest.digest(originalUrl.getBytes());
+
+        // Convert the hash bytes to a hex string
+        BigInteger bigInt = new BigInteger(1, digestBytes);
+        StringBuilder hexHash = new StringBuilder(bigInt.toString(16));
+
+        // Pad the hex string if necessary to ensure it meets the expected length
+        while (hexHash.length() < 64) {
+            hexHash.insert(0, "0");
+        }
+
+        // Generate a base62 code of the required length
+        StringBuilder codeBuilder = new StringBuilder(Constants.CODE_LENGTH);
         for (int i = 0; i < Constants.CODE_LENGTH; i++) {
-            int index = Integer.parseInt(hexHash.substring(i * 4, (i + 1) * 4), 16) % Constants.BASE62_CHARACTERS.length();
+            int startIdx = i * 4;
+            int endIdx = startIdx + 4;
+            int index = Integer.parseInt(hexHash.substring(startIdx, endIdx), 16) % Constants.BASE62_CHARACTERS.length();
             codeBuilder.append(Constants.BASE62_CHARACTERS.charAt(index));
         }
 
