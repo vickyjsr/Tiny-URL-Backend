@@ -1,7 +1,10 @@
-FROM openjdk:17
+FROM openjdk:17-jdk-slim as builder
+WORKDIR /app
+COPY . .
+RUN ./mvnw clean package -DskipTests
 
-ARG JAR_FILE=target/*.jar
-
-COPY ./target/spring-boot-docker.jar app.jar
-
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=builder /app/target/spring-boot-docker.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
